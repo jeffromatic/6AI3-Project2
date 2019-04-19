@@ -10,21 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Script to runs MobileNet-based classification model modified so it recognize the hand gestures.
 
-index  label           function        pin_A pin_B pin_C
-0      moutzas_in      de/activation   1     1     0 
-1      moutzas_out     de/activation   1     1     0
-2      namaste         forward         0     1     1
-3      no_hands        no action       0     0     0
-4      right           right           0     1     0
-5      t               left            0     0     1 
-6      thumbs_dn       backward        1     0     0
-7      x               stop            1     0     1
-8      none            no action       0     0     0
-
-"""
 
 import argparse
 import time
