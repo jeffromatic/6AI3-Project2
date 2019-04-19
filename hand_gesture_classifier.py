@@ -1,6 +1,4 @@
-Python 3.7.3 (v3.7.3:ef4ec6ed12, Mar 25 2019, 21:26:53) [MSC v.1916 32 bit (Intel)] on win32
-Type "help", "copyright", "credits" or "license()" for more information.
->>> #!/usr/bin/env python3
+#!/usr/bin/env python3
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -44,7 +42,15 @@ from gpiozero import Button
 from aiy.vision.pins import BUTTON_GPIO_PIN
 from aiy.vision.leds import Leds
 from gpiozero import LED
+from aiy.vision.pins import PIN_A
+from aiy.vision.pins import PIN_B
+from aiy.vision.pins import PIN_C
 import aiy.toneplayer
+
+# Initialize the GPIO pins A,B,C
+pin_A = LED(PIN_A)
+pin_B = LED(PIN_B)
+pin_C = LED(PIN_C)
 
 # Initialize the buzzer
 ready = [
@@ -103,6 +109,64 @@ def blink_led(color=RED,period=1,num_blinks=5):
        time.sleep(period/2)
        leds.update(Leds.rgb_off())
        time.sleep(period/2)
+
+# Set status of GPIO pin
+def pinStatus(pin,status,gpio_logic):
+    if gpio_logic=='INVERSE':
+        if status=='HIGH':
+            pin.off()
+        if status=='LOW':
+            pin.on()
+    else:
+        if status=='HIGH':
+            pin.on()
+        if status=='LOW':
+            pin.off()
+
+
+# Send signal to pins
+"""
+index  label           function        pin_A pin_B pin_C
+0      moutzas_in      de/activation   1     1     0 
+1      moutzas_out     de/activation   1     1     0
+2      namaste         forward         0     1     1
+3      no_hands        no action       0     0     0
+4      right           right           0     1     0
+5      t               left            0     0     1 
+6      thumbs_dn       backward        1     0     0
+7      x               stop            1     0     1
+8      none            no action       0     0     0
+"""
+def send_signal_to_pins(signal,gpio_logic):
+    if signal == 0 or signal == 1:
+        pinStatus(pin_A,'HIGH',gpio_logic)
+        pinStatus(pin_B,'HIGH',gpio_logic)
+        pinStatus(pin_C,'LOW',gpio_logic)
+    elif signal == 2:
+        pinStatus(pin_A,'LOW',gpio_logic)
+        pinStatus(pin_B,'HIGH',gpio_logic)
+        pinStatus(pin_C,'HIGH',gpio_logic)
+    elif signal == 4:
+        pinStatus(pin_A,'LOW',gpio_logic)
+        pinStatus(pin_B,'HIGH',gpio_logic)
+        pinStatus(pin_C,'LOW',gpio_logic)
+    elif signal == 5:
+        pinStatus(pin_A,'LOW',gpio_logic)
+        pinStatus(pin_B,'LOW',gpio_logic)
+        pinStatus(pin_C,'HIGH',gpio_logic)
+    elif signal == 6:
+        pinStatus(pin_A,'HIGH',gpio_logic)
+        pinStatus(pin_B,'LOW',gpio_logic)
+        pinStatus(pin_C,'LOW',gpio_logic)
+    elif signal == 7:
+        pinStatus(pin_A,'HIGH',gpio_logic)
+        pinStatus(pin_B,'LOW',gpio_logic)
+        pinStatus(pin_C,'HIGH',gpio_logic)
+    else:
+        pinStatus(pin_A,'LOW',gpio_logic)
+        pinStatus(pin_B,'LOW',gpio_logic)
+        pinStatus(pin_C,'LOW',gpio_logic)
+    time.sleep(0.1)
 
 # Buffer update and best guess estimation
 def buffer_update(new_observation,buffer, buffer_length):
@@ -363,6 +427,9 @@ def main():
             while True:
                 long_buffer = []
                 short_buffer = []
+                pinStatus(pin_A,'LOW',args.gpio_logic)
+                pinStatus(pin_B,'LOW',args.gpio_logic)
+                pinStatus(pin_C,'LOW',args.gpio_logic)
                 leds.update(Leds.rgb_on(GREEN))
                 face_box = detect_face()
                 hand_box_params = determine_hand_box_params(face_box)
@@ -388,6 +455,7 @@ def main():
                     if (long_guess == activation_index or long_guess == deactivation_index) and not is_active and num_long_guess >= (long_buffer_length - 3):
                         is_active = True
                         leds.update(Leds.rgb_on(RED))
+                        send_signal_to_pins(activation_index,args.gpio_logic)
                         long_buffer = []                      
                         num_long_guess = 0                     
                         time.sleep(1)
@@ -398,6 +466,7 @@ def main():
                         leds.update(Leds.rgb_off())
                         long_buffer = []
                         num_long_guess = 0                     
+                        send_signal_to_pins(deactivation_index,args.gpio_logic)                      
                         time.sleep(1)
                         break
 
@@ -406,7 +475,8 @@ def main():
                         timer = time.time()-start_timer
                         if timer >= max_no_activity_period:
                             leds.update(Leds.rgb_off())
-			    time.sleep(1)
+                            send_signal_to_pins(deactivation_index,args.gpio_logic)                      
+                            time.sleep(1)
                             break
                     else:
                         start_timer = time.time()  
@@ -414,7 +484,8 @@ def main():
                         # Displaying classified hand gesture commands
                         if num_short_guess >= (short_buffer_length-1) and is_active:
                             print_hand_command(short_guess)
-                             
+                            send_signal_to_pins(short_guess,args.gpio_logic)
+ 
         camera.stop_preview()
 
 if __name__ == '__main__':
