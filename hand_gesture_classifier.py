@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,6 +12,7 @@
 # limitations under the License.
 """
 Script to runs MobileNet-based classification model modified so it recognize the hand gestures.
+
 index  label           function        pin_A pin_B pin_C
 0      moutzas_in      de/activation   1     1     0 
 1      moutzas_out     de/activation   1     1     0
@@ -22,6 +23,7 @@ index  label           function        pin_A pin_B pin_C
 6      thumbs_dn       backward        1     0     0
 7      x               stop            1     0     1
 8      none            no action       0     0     0
+
 """
 
 import argparse
